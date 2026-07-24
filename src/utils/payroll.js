@@ -12,6 +12,7 @@ export const LEGEND = [
   { type: 'absent', label: 'Absent' },
   { type: 'conge', label: 'Congé' },
   { type: 'autre', label: 'Autre' },
+  { type: 'dimanche', label: 'Dimanche (repos)' },
   { type: 'sans_donnee', label: 'Non pointé' },
 ];
 
@@ -25,8 +26,17 @@ export const LEGEND = [
  *   absent                 -> absent (0 DT)
  *   conge                  -> congé (payé ou non selon l'option congePaye)
  */
-export function classifyDay(row) {
-  if (!row) return { type: 'sans_donnee', label: 'Non pointé', heures: 0 };
+export function classifyDay(row, date) {
+  if (!row) {
+    // Un dimanche sans pointage est un jour de repos normal, pas une anomalie :
+    // on ne le marque "Non pointé" que si l'employé a effectivement pu travailler.
+    // Si l'employé a travaillé un dimanche, une ligne "pointages" existe pour cette
+    // date et ce cas n'est donc jamais atteint (voir branche statut === 'present' ci-dessous).
+    if (date && isSunday(date)) {
+      return { type: 'dimanche', label: 'Dimanche', heures: 0 };
+    }
+    return { type: 'sans_donnee', label: 'Non pointé', heures: 0 };
+  }
   const { statut, type_presence, heures_travaillees } = row;
   const heures = heures_travaillees || 0;
 
@@ -45,6 +55,11 @@ export function classifyDay(row) {
   return { type: 'autre', label: statut || '—', heures };
 }
 
+/** Vrai si la date (YYYY-MM-DD) tombe un dimanche. */
+function isSunday(dateStr) {
+  return new Date(dateStr + 'T00:00:00').getDay() === 0;
+}
+
 /** Calcule le montant dû pour une journée classifiée. */
 export function dayAmount(dayType, salaireJournalier, overtimeMult, congePaye) {
   const hourly = salaireJournalier / 8;
@@ -60,6 +75,7 @@ export function dayAmount(dayType, salaireJournalier, overtimeMult, congePaye) {
     case 'autre': return dayType.heures > 0 ? dayType.heures * hourly : 0;
     case 'absent':
     case 'sans_donnee':
+    case 'dimanche':
     default: return 0;
   }
 }
@@ -125,12 +141,12 @@ export function buildEmployeeReport(db, emp, start, end, overtimeMult, congePaye
 
   const days = dateRangeArray(start, end).map(d => {
     const row = byDate[d];
-    const dt = classifyDay(row);
+    const dt = classifyDay(row, d);
     const montant = dayAmount(dt, emp.salaire_journalier, overtimeMult, congePaye);
     return { date: d, ...dt, montant };
   });
 
-  const counts = { normal: 0, demi: 0, heures_sup: 0, double: 0, absent: 0, conge: 0, autre: 0, sans_donnee: 0 };
+  const counts = { normal: 0, demi: 0, heures_sup: 0, double: 0, absent: 0, conge: 0, autre: 0, dimanche: 0, sans_donnee: 0 };
   let heuresSupTotal = 0;
   let brut = 0;
   days.forEach(d => {
