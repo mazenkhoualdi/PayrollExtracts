@@ -64,13 +64,21 @@ export function dayAmount(dayType, salaireJournalier, overtimeMult, congePaye) {
   }
 }
 
+/** Formate une Date en YYYY-MM-DD à partir de ses composantes locales (évite le décalage UTC de toISOString). */
+function toLocalISODate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 /** Liste des dates (YYYY-MM-DD) entre start et end inclus. */
 export function dateRangeArray(start, end) {
   const dates = [];
   let cur = new Date(start + 'T00:00:00');
   const last = new Date(end + 'T00:00:00');
   while (cur <= last) {
-    dates.push(cur.toISOString().slice(0, 10));
+    dates.push(toLocalISODate(cur));
     cur.setDate(cur.getDate() + 1);
   }
   return dates;
