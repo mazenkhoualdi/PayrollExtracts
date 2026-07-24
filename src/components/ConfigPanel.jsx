@@ -34,11 +34,7 @@ export default function ConfigPanel({ config, setConfig }) {
           </div>
         </div>
       </div>
-      <div className="info-banner">
-        La table <b>compléments</b> de la base (loyer, gasoil, transport...) n'est pas liée à un employé précis
-        dans vos données — elle n'est donc pas incluse dans les extraits, pour rester fiable. Seuls les{' '}
-        <b>pointages</b> et les <b>avances</b> par employé sont utilisés.
-      </div>
+    
     </div>
   );
 }
