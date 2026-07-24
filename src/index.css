@@ -22,6 +22,8 @@
   --autre:#a67a3a;
   --autre-bg:#f5ede0;
   --none-bg:#f2f1ec;
+  --dimanche:#5a6e96;
+  --dimanche-bg:#e8ebf3;
   --radius:10px;
 }
 *{box-sizing:border-box;}
@@ -158,6 +160,7 @@ header.app-header p{margin:2px 0 0;color:var(--ink-soft);font-size:13.5px;}
 .cal-cell.type-absent{background:var(--absent-bg);color:var(--absent);}
 .cal-cell.type-conge{background:var(--conge-bg);color:var(--conge);}
 .cal-cell.type-autre{background:var(--autre-bg);color:var(--autre);}
+.cal-cell.type-dimanche{background:var(--dimanche-bg);color:var(--dimanche);}
 .cal-cell.type-sans_donnee{background:var(--none-bg);color:#b3b1a8;}
 
 .recap{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:20px 0;}
