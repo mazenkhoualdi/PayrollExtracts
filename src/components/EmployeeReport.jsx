@@ -46,22 +46,8 @@ export default function EmployeeReport({ report, start, end }) {
     const noPrintEls = el.querySelectorAll(".no-print");
     noPrintEls.forEach((n) => (n.style.visibility = "hidden"));
 
-    // Mode compact : réduit les paddings, marges et tailles de police
-    // avant la capture pour que tout tienne sur une seule page.
-    el.classList.add("pdf-compact");
-    // Force le navigateur à recalculer la mise en page avant de mesurer.
-    void el.offsetHeight;
-
     const marginMM = 6;
     const A4_WIDTH_MM = 210;
-    const contentWidthMM = A4_WIDTH_MM - marginMM * 2;
-
-    const pxWidth = el.offsetWidth;
-    const pxHeight = el.scrollHeight;
-    // Hauteur de page calculée à partir du contenu réel (après compactage) :
-    // la page fait exactement la hauteur du rapport, donc jamais de 2e page.
-    const contentHeightMM = (pxHeight / pxWidth) * contentWidthMM;
-    const pageHeightMM = Math.max(contentHeightMM + marginMM * 2, 100);
 
     const opt = {
       margin: marginMM,
@@ -77,26 +63,44 @@ export default function EmployeeReport({ report, start, end }) {
       },
       jsPDF: {
         unit: "mm",
-        format: [A4_WIDTH_MM, pageHeightMM],
+        format: "a4",
         orientation: "portrait",
       },
       pagebreak: { mode: ["avoid-all"] },
     };
 
+    const finish = () => {
+      noPrintEls.forEach((n) => (n.style.visibility = "visible"));
+      setIsDownloading(false);
+    };
+
     html2pdf()
       .set(opt)
       .from(el)
-      .save()
-      .then(() => {
-        el.classList.remove("pdf-compact");
-        noPrintEls.forEach((n) => (n.style.visibility = "visible"));
-        setIsDownloading(false);
+      .toContainer()
+      .toCanvas()
+      .then(function () {
+        // html2pdf clone l'élément dans un conteneur dont IL force la largeur
+        // (celle de la page PDF). On mesure donc la hauteur de page nécessaire
+        // sur le canvas réellement produit (après ce redimensionnement interne),
+        // et non sur la largeur de l'écran : c'est la seule façon de garantir
+        // que la page ait exactement la hauteur du contenu, sans 2e page.
+        const canvas = this.prop.canvas;
+        const contentWidthMM = A4_WIDTH_MM - marginMM * 2;
+        const contentHeightMM = (canvas.height / canvas.width) * contentWidthMM;
+        const pageHeightMM = contentHeightMM + marginMM * 2;
+        return this.set({
+          jsPDF: {
+            unit: "mm",
+            format: [A4_WIDTH_MM, pageHeightMM],
+            orientation: "portrait",
+          },
+        });
       })
-      .catch(() => {
-        el.classList.remove("pdf-compact");
-        noPrintEls.forEach((n) => (n.style.visibility = "visible"));
-        setIsDownloading(false);
-      });
+      .toPdf()
+      .save()
+      .then(finish)
+      .catch(finish);
   }
 
   return (
@@ -338,7 +342,7 @@ export default function EmployeeReport({ report, start, end }) {
         .employee-report {
           background: white;
           border-radius: 12px;
-          padding: 30px 35px;
+          padding: 16px 20px;
           box-shadow: 0 2px 12px rgba(0,0,0,0.06);
           border: 1px solid #e9ecef;
         }
@@ -348,9 +352,9 @@ export default function EmployeeReport({ report, start, end }) {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          border-bottom: 3px solid var(--brand);
-          padding-bottom: 20px;
-          margin-bottom: 24px;
+          border-bottom: 2px solid var(--brand);
+          padding-bottom: 8px;
+          margin-bottom: 10px;
           flex-wrap: wrap;
           gap: 16px;
         }
@@ -363,15 +367,15 @@ export default function EmployeeReport({ report, start, end }) {
           display: flex;
           align-items: center;
           gap: 8px;
-          margin-bottom: 10px;
+          margin-bottom: 3px;
         }
 
         .logo-icon {
-          font-size: 20px;
+          font-size: 15px;
         }
 
         .company-name {
-          font-size: 13px;
+          font-size: 10px;
           font-weight: 700;
           color: var(--brand);
           text-transform: uppercase;
@@ -380,7 +384,7 @@ export default function EmployeeReport({ report, start, end }) {
 
         .employee-info h3 {
           margin: 0;
-          font-size: 22px;
+          font-size: 16px;
           color: var(--brand);
           display: flex;
           align-items: center;
@@ -392,8 +396,8 @@ export default function EmployeeReport({ report, start, end }) {
           align-items: center;
           gap: 8px;
           flex-wrap: wrap;
-          margin-top: 4px;
-          font-size: 13.5px;
+          margin-top: 2px;
+          font-size: 11px;
           color: var(--ink-soft);
         }
 
@@ -404,7 +408,7 @@ export default function EmployeeReport({ report, start, end }) {
         }
 
         .meta-icon {
-          font-size: 14px;
+          font-size: 12px;
         }
 
         .meta-divider {
@@ -421,14 +425,14 @@ export default function EmployeeReport({ report, start, end }) {
 
         .period-box {
           background: #f8f9fa;
-          padding: 8px 16px;
+          padding: 5px 12px;
           border-radius: 8px;
           text-align: right;
           border: 1px solid #e9ecef;
         }
 
         .period-label {
-          font-size: 11px;
+          font-size: 9px;
           font-weight: 600;
           color: var(--ink-soft);
           text-transform: uppercase;
@@ -437,7 +441,7 @@ export default function EmployeeReport({ report, start, end }) {
         }
 
         .period-date {
-          font-size: 14px;
+          font-size: 12px;
           font-weight: 600;
           color: var(--brand);
         }
@@ -473,13 +477,13 @@ export default function EmployeeReport({ report, start, end }) {
         .legend-section {
           background: #f8f9fa;
           border-radius: 8px;
-          padding: 12px 16px;
-          margin-bottom: 20px;
+          padding: 6px 10px;
+          margin-bottom: 10px;
         }
 
         .legend {
           display: flex;
-          gap: 16px;
+          gap: 10px;
           flex-wrap: wrap;
           justify-content: center;
         }
@@ -487,55 +491,55 @@ export default function EmployeeReport({ report, start, end }) {
         .lg-item {
           display: flex;
           align-items: center;
-          gap: 6px;
-          font-size: 11.5px;
+          gap: 4px;
+          font-size: 9px;
           color: var(--ink-soft);
         }
 
         .lg-swatch {
-          width: 14px;
-          height: 14px;
-          border-radius: 4px;
+          width: 9px;
+          height: 9px;
+          border-radius: 3px;
           flex-shrink: 0;
           border: 1px solid rgba(0,0,0,0.05);
         }
 
         /* Statistiques */
         .stats-section {
-          margin: 24px 0;
+          margin: 10px 0;
         }
 
         .stats-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 14px;
+          margin-bottom: 8px;
         }
 
         .stats-title {
-          font-size: 15px;
+          font-size: 12.5px;
           font-weight: 700;
           color: var(--brand);
         }
 
         .stats-subtitle {
-          font-size: 12px;
+          font-size: 10px;
           color: var(--ink-soft);
           background: #f8f9fa;
-          padding: 2px 12px;
+          padding: 2px 10px;
           border-radius: 12px;
         }
 
         .recap {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-          gap: 10px;
+          grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+          gap: 6px;
         }
 
         .stat {
           border: 1px solid #e9ecef;
-          border-radius: 10px;
-          padding: 12px 14px;
+          border-radius: 8px;
+          padding: 6px 8px;
           text-align: center;
           position: relative;
           background: #fafbfc;
@@ -548,26 +552,26 @@ export default function EmployeeReport({ report, start, end }) {
         }
 
         .stat-value {
-          font-size: 22px;
+          font-size: 15px;
           font-weight: 700;
           color: var(--ink);
         }
 
         .stat-label {
-          font-size: 10.5px;
+          font-size: 8px;
           color: var(--ink-soft);
-          margin-top: 2px;
+          margin-top: 1px;
         }
 
         .stat-sub {
-          font-size: 9px;
+          font-size: 7px;
           color: var(--ink-soft);
           opacity: 0.7;
         }
 
         .stat-icon {
-          font-size: 18px;
-          margin-top: 4px;
+          font-size: 12px;
+          margin-top: 2px;
         }
 
         .stat-normal { border-left: 3px solid var(--ok); }
@@ -618,15 +622,15 @@ export default function EmployeeReport({ report, start, end }) {
 
         /* Finance */
         .finance-section {
-          margin: 24px 0;
+          margin: 10px 0;
         }
 
         .finance-header {
-          margin-bottom: 14px;
+          margin-bottom: 8px;
         }
 
         .finance-title {
-          font-size: 15px;
+          font-size: 12.5px;
           font-weight: 700;
           color: var(--brand);
         }
@@ -634,26 +638,26 @@ export default function EmployeeReport({ report, start, end }) {
         .detail {
           width: 100%;
           border-collapse: collapse;
-          font-size: 13.5px;
+          font-size: 11px;
         }
 
         .detail thead th {
           text-align: left;
-          font-size: 11px;
+          font-size: 9px;
           text-transform: uppercase;
           letter-spacing: 0.5px;
           color: var(--ink-soft);
-          padding: 8px 12px;
+          padding: 4px 8px;
           border-bottom: 2px solid #e9ecef;
         }
 
         .detail tbody td {
-          padding: 10px 12px;
+          padding: 5px 8px;
           border-bottom: 1px solid #f1f3f5;
         }
 
         .detail-row td {
-          padding: 10px 12px;
+          padding: 5px 8px;
         }
 
         .detail-label {
@@ -663,7 +667,7 @@ export default function EmployeeReport({ report, start, end }) {
         }
 
         .detail-sub {
-          font-size: 11.5px;
+          font-size: 9.5px;
           color: var(--ink-soft);
         }
 
@@ -678,64 +682,64 @@ export default function EmployeeReport({ report, start, end }) {
         }
 
         .detail-divider td {
-          padding: 16px 12px 8px 12px;
+          padding: 8px 8px 4px 8px;
           border-bottom: none;
         }
 
         .divider-text {
           font-weight: 600;
           color: var(--ink-soft);
-          font-size: 13px;
+          font-size: 11px;
         }
 
         .divider-count {
-          font-size: 11px;
+          font-size: 9.5px;
           color: var(--ink-soft);
           margin-left: 8px;
           background: #f8f9fa;
-          padding: 1px 10px;
+          padding: 1px 8px;
           border-radius: 10px;
         }
 
         .advance-row td {
-          padding: 6px 12px;
+          padding: 3px 8px;
         }
 
         .advance-number {
           display: inline-block;
           background: #f8f9fa;
-          padding: 0 8px;
+          padding: 0 6px;
           border-radius: 4px;
-          font-size: 10px;
+          font-size: 9px;
           color: var(--ink-soft);
-          margin-right: 8px;
+          margin-right: 6px;
         }
 
         .detail-total td {
-          padding: 12px 12px;
+          padding: 6px 8px;
           border-top: 2px solid #e9ecef;
           font-weight: 600;
         }
 
         .total-label {
-          font-size: 14px;
+          font-size: 12px;
           color: var(--ink);
         }
 
         .detail-net td {
-          padding: 16px 12px;
+          padding: 8px 8px;
           border-top: 3px solid var(--brand);
           background: #f8f9fa;
         }
 
         .net-label {
-          font-size: 18px;
+          font-size: 13px;
           font-weight: 700;
           color: var(--brand);
         }
 
         .net-amount {
-          font-size: 22px;
+          font-size: 16px;
           font-weight: 700;
           color: var(--brand);
         }
@@ -745,9 +749,9 @@ export default function EmployeeReport({ report, start, end }) {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 16px;
-          margin-top: 16px;
-          padding: 14px 20px;
+          gap: 10px;
+          margin-top: 8px;
+          padding: 8px 12px;
           background: #f8f9fa;
           border-radius: 10px;
           flex-wrap: wrap;
@@ -772,13 +776,13 @@ export default function EmployeeReport({ report, start, end }) {
         }
 
         .summary-label {
-          font-size: 12px;
+          font-size: 10px;
           color: var(--ink-soft);
           font-weight: 500;
         }
 
         .summary-value {
-          font-size: 16px;
+          font-size: 12px;
           font-weight: 700;
           color: var(--ink);
         }
@@ -795,8 +799,8 @@ export default function EmployeeReport({ report, start, end }) {
 
         /* Signatures */
         .signature-section {
-          margin-top: 30px;
-          padding-top: 20px;
+          margin-top: 14px;
+          padding-top: 10px;
           border-top: 2px solid #e9ecef;
         }
 
@@ -812,31 +816,31 @@ export default function EmployeeReport({ report, start, end }) {
         }
 
         .signature-label {
-          font-size: 12px;
+          font-size: 10px;
           font-weight: 600;
           color: var(--ink-soft);
-          margin-bottom: 30px;
+          margin-bottom: 16px;
         }
 
         .signature-line-dash {
           border-top: 1px dashed #dee2e6;
           margin: 0 10px;
-          height: 30px;
+          height: 16px;
         }
 
         .signature-date {
-          font-size: 11px;
+          font-size: 10px;
           color: var(--ink-soft);
-          margin-top: 8px;
+          margin-top: 4px;
         }
 
         .signature-footer {
           display: flex;
           justify-content: space-between;
-          margin-top: 16px;
-          padding-top: 12px;
+          margin-top: 8px;
+          padding-top: 6px;
           border-top: 1px solid #f1f3f5;
-          font-size: 10.5px;
+          font-size: 9px;
           color: var(--ink-soft);
         }
 
@@ -896,7 +900,7 @@ export default function EmployeeReport({ report, start, end }) {
           .employee-report {
             box-shadow: none;
             border: none;
-            padding: 15px;
+            padding: 10px 14px;
           }
 
           .rep-download {
@@ -912,101 +916,25 @@ export default function EmployeeReport({ report, start, end }) {
           }
         }
 
-        /* Mode compact : appliqué juste avant la capture PDF pour que
-           l'ensemble du rapport tienne sur une seule page. */
-        .pdf-compact {
-          padding: 16px 18px !important;
-        }
-
-        .pdf-compact .rep-head {
-          padding-bottom: 8px;
-          margin-bottom: 10px;
-        }
-
-        .pdf-compact .company-logo { margin-bottom: 3px; }
-        .pdf-compact .logo-icon { font-size: 15px; }
-        .pdf-compact .company-name { font-size: 10px; }
-        .pdf-compact .employee-info h3 { font-size: 16px; }
-        .pdf-compact .employee-meta { font-size: 11px; margin-top: 2px; }
-        .pdf-compact .period-box { padding: 5px 12px; }
-        .pdf-compact .period-label { font-size: 9px; }
-        .pdf-compact .period-date { font-size: 12px; }
-
-        .pdf-compact .legend-section {
-          padding: 6px 10px;
-          margin-bottom: 10px;
-        }
-        .pdf-compact .lg-item { font-size: 9px; }
-        .pdf-compact .lg-swatch { width: 9px; height: 9px; }
-
-        .pdf-compact .month-calendar-wrapper { gap: 12px; }
-        .pdf-compact .month-block { padding: 10px; }
-        .pdf-compact .month-header { margin-bottom: 8px; padding-bottom: 6px; }
-        .pdf-compact .month-title { font-size: 13px; }
-        .pdf-compact .month-icon { font-size: 15px; }
-        .pdf-compact .month-stats { gap: 8px; font-size: 10px; }
-        .pdf-compact .month-stat { padding: 2px 8px; }
-        .pdf-compact .cal-grid { gap: 3px; }
-        .pdf-compact .cal-dow { padding: 3px 2px 4px 2px; font-size: 9px; }
-        .pdf-compact .cal-cell { min-height: 38px; padding: 3px 4px; }
-        .pdf-compact .cal-cell.empty { min-height: 14px; }
-        .pdf-compact .d-num { font-size: 10.5px; }
-        .pdf-compact .d-amount { font-size: 7.5px; padding: 0 4px; }
-        .pdf-compact .d-icon { font-size: 9px; }
-        .pdf-compact .d-label { font-size: 6.5px; }
-        .pdf-compact .month-legend { margin-top: 8px; padding-top: 6px; }
-        .pdf-compact .legend-item { font-size: 8px; padding: 1px 6px; }
-
-        .pdf-compact .stats-section { margin: 10px 0; }
-        .pdf-compact .stats-header { margin-bottom: 8px; }
-        .pdf-compact .stats-title { font-size: 12.5px; }
-        .pdf-compact .stats-subtitle { font-size: 10px; }
-        .pdf-compact .recap { gap: 6px; }
-        .pdf-compact .stat { padding: 6px 8px; }
-        .pdf-compact .stat-value { font-size: 15px; }
-        .pdf-compact .stat-label { font-size: 8px; }
-        .pdf-compact .stat-sub { font-size: 7px; }
-        .pdf-compact .stat-icon { font-size: 12px; margin-top: 2px; }
-
-        .pdf-compact .presence-rate { margin-top: 8px; padding: 8px 10px; }
-        .pdf-compact .presence-rate-label { font-size: 11px; margin-bottom: 4px; }
-        .pdf-compact .presence-rate-value { font-size: 12px; }
-        .pdf-compact .presence-rate-bar { height: 6px; }
-        .pdf-compact .presence-rate-details { font-size: 9.5px; margin-top: 4px; }
-
-        .pdf-compact .finance-section { margin: 10px 0; }
-        .pdf-compact .finance-header { margin-bottom: 8px; }
-        .pdf-compact .finance-title { font-size: 12.5px; }
-        .pdf-compact .detail { font-size: 11px; }
-        .pdf-compact .detail thead th { padding: 4px 8px; font-size: 9px; }
-        .pdf-compact .detail tbody td { padding: 5px 8px; }
-        .pdf-compact .detail-row td { padding: 5px 8px; }
-        .pdf-compact .detail-sub { font-size: 9.5px; }
-        .pdf-compact .detail-divider td { padding: 8px 8px 4px 8px; }
-        .pdf-compact .advance-row td { padding: 3px 8px; }
-        .pdf-compact .detail-total td { padding: 6px 8px; }
-        .pdf-compact .detail-net td { padding: 8px 8px; }
-        .pdf-compact .net-label { font-size: 13px; }
-        .pdf-compact .net-amount { font-size: 16px; }
-
-        .pdf-compact .amount-summary {
-          margin-top: 8px;
-          padding: 8px 12px;
-          gap: 10px;
-        }
-        .pdf-compact .summary-label { font-size: 10px; }
-        .pdf-compact .summary-value { font-size: 12px; }
-
-        .pdf-compact .signature-section {
-          margin-top: 14px;
-          padding-top: 10px;
-        }
-        .pdf-compact .signature-label {
-          font-size: 10px;
-          margin-bottom: 16px;
-        }
-        .pdf-compact .signature-line-dash { height: 16px; }
-        .pdf-compact .signature-footer { font-size: 9px; margin-top: 8px; padding-top: 6px; }
+        /* Version compacte du calendrier mensuel, pour que l'ensemble
+           du rapport tienne sur une seule page à l'impression/PDF. */
+        .month-calendar-wrapper { gap: 12px; }
+        .month-block { padding: 10px; }
+        .month-header { margin-bottom: 8px; padding-bottom: 6px; }
+        .month-title { font-size: 13px; }
+        .month-icon { font-size: 15px; }
+        .month-stats { gap: 8px; font-size: 10px; }
+        .month-stat { padding: 2px 8px; }
+        .cal-grid { gap: 3px; }
+        .cal-dow { padding: 3px 2px 4px 2px; font-size: 9px; }
+        .cal-cell { min-height: 38px; padding: 3px 4px; }
+        .cal-cell.empty { min-height: 14px; }
+        .d-num { font-size: 10.5px; }
+        .d-amount { font-size: 7.5px; padding: 0 4px; }
+        .d-icon { font-size: 9px; }
+        .d-label { font-size: 6.5px; }
+        .month-legend { margin-top: 8px; padding-top: 6px; }
+        .legend-item { font-size: 8px; padding: 1px 6px; }
       `}</style>
     </div>
   );
