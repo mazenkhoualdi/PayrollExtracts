@@ -1,43 +1,54 @@
-import { useRef, useState } from 'react';
-import html2pdf from 'html2pdf.js';
-import MonthCalendar from './MonthCalendar';
-import { LEGEND, fmtMoney, formatPeriodLabel } from '../utils/payroll';
+import { useRef, useState } from "react";
+import html2pdf from "html2pdf.js";
+import MonthCalendar from "./MonthCalendar";
+import { LEGEND, fmtMoney, formatPeriodLabel } from "../utils/payroll";
 
 const LEGEND_COLORS = {
-  normal: 'var(--ok)',
-  demi: 'var(--half)',
-  heures_sup: 'var(--sup)',
-  double: 'var(--double)',
-  absent: 'var(--absent)',
-  conge: 'var(--conge)',
-  autre: 'var(--autre)',
-  dimanche: 'var(--dimanche)',
-  sans_donnee: '#b3b1a8',
+  normal: "var(--ok)",
+  demi: "var(--half)",
+  heures_sup: "var(--sup)",
+  double: "var(--double)",
+  absent: "var(--absent)",
+  conge: "var(--conge)",
+  autre: "var(--autre)",
+  dimanche: "var(--dimanche)",
+  sans_donnee: "#b3b1a8",
 };
 
 export default function EmployeeReport({ report, start, end }) {
   const ref = useRef(null);
   const [isDownloading, setIsDownloading] = useState(false);
-  const { emp, days, counts, heuresSupTotal, brut, avances, totalAvances, net } = report;
+  const {
+    emp,
+    days,
+    counts,
+    heuresSupTotal,
+    brut,
+    avances,
+    totalAvances,
+    net,
+  } = report;
   const periodLabel = formatPeriodLabel(start, end);
 
   // Calcul des statistiques supplémentaires
   const totalDays = days.length;
-  const workedDays = counts.normal + counts.demi + counts.heures_sup + counts.double;
+  const workedDays =
+    counts.normal + counts.demi + counts.heures_sup + counts.double;
   const absenceDays = counts.absent + counts.sans_donnee;
-  const workRate = totalDays > 0 ? Math.round((workedDays / totalDays) * 100) : 0;
+  const workRate =
+    totalDays > 0 ? Math.round((workedDays / totalDays) * 100) : 0;
 
   function downloadPdf() {
     const el = ref.current;
     if (!el) return;
 
     setIsDownloading(true);
-    const noPrintEls = el.querySelectorAll('.no-print');
-    noPrintEls.forEach(n => (n.style.visibility = 'hidden'));
+    const noPrintEls = el.querySelectorAll(".no-print");
+    noPrintEls.forEach((n) => (n.style.visibility = "hidden"));
 
     // Mode compact : réduit les paddings, marges et tailles de police
     // avant la capture pour que tout tienne sur une seule page.
-    el.classList.add('pdf-compact');
+    el.classList.add("pdf-compact");
     // Force le navigateur à recalculer la mise en page avant de mesurer.
     void el.offsetHeight;
 
@@ -54,20 +65,22 @@ export default function EmployeeReport({ report, start, end }) {
 
     const opt = {
       margin: marginMM,
-      filename: `extrait_salaire_${emp.nom}_${emp.prenom || ''}`.replace(/\s+/g, '_') + '.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
+      filename:
+        `extrait_salaire_${emp.nom}_${emp.prenom || ""}`.replace(/\s+/g, "_") +
+        ".pdf",
+      image: { type: "jpeg", quality: 0.98 },
       html2canvas: {
         scale: 2,
         useCORS: true,
         logging: false,
-        letterRendering: true
+        letterRendering: true,
       },
       jsPDF: {
-        unit: 'mm',
+        unit: "mm",
         format: [A4_WIDTH_MM, pageHeightMM],
-        orientation: 'portrait'
+        orientation: "portrait",
       },
-      pagebreak: { mode: ['avoid-all'] }
+      pagebreak: { mode: ["avoid-all"] },
     };
 
     html2pdf()
@@ -75,13 +88,13 @@ export default function EmployeeReport({ report, start, end }) {
       .from(el)
       .save()
       .then(() => {
-        el.classList.remove('pdf-compact');
-        noPrintEls.forEach(n => (n.style.visibility = 'visible'));
+        el.classList.remove("pdf-compact");
+        noPrintEls.forEach((n) => (n.style.visibility = "visible"));
         setIsDownloading(false);
       })
       .catch(() => {
-        el.classList.remove('pdf-compact');
-        noPrintEls.forEach(n => (n.style.visibility = 'visible'));
+        el.classList.remove("pdf-compact");
+        noPrintEls.forEach((n) => (n.style.visibility = "visible"));
         setIsDownloading(false);
       });
   }
@@ -98,13 +111,12 @@ export default function EmployeeReport({ report, start, end }) {
             </div>
             <div className="employee-info">
               <h3>
-                {emp.nom} {emp.prenom || ''}
-                <span className={`status-dot ${emp.actif ? 'active' : 'inactive'}`} />
+                {emp.nom} {emp.prenom || ""}
               </h3>
               <div className="employee-meta">
                 <span className="meta-item">
                   <span className="meta-icon">💼</span>
-                  {emp.poste || 'Poste non spécifié'}
+                  {emp.poste || "Poste non spécifié"}
                 </span>
                 <span className="meta-divider">·</span>
                 <span className="meta-item">
@@ -119,8 +131,8 @@ export default function EmployeeReport({ report, start, end }) {
               <span className="period-label">📅 Période</span>
               <span className="period-date">{periodLabel}</span>
             </div>
-            <button 
-              className={`btn small rep-download no-print ${isDownloading ? 'loading' : ''}`} 
+            <button
+              className={`btn small rep-download no-print ${isDownloading ? "loading" : ""}`}
               onClick={downloadPdf}
               disabled={isDownloading}
             >
@@ -130,9 +142,7 @@ export default function EmployeeReport({ report, start, end }) {
                   Téléchargement...
                 </>
               ) : (
-                <>
-                  ⬇ Télécharger PDF
-                </>
+                <>⬇ Télécharger PDF</>
               )}
             </button>
           </div>
@@ -141,9 +151,12 @@ export default function EmployeeReport({ report, start, end }) {
         {/* Légende améliorée */}
         <div className="legend-section">
           <div className="legend">
-            {LEGEND.map(l => (
+            {LEGEND.map((l) => (
               <div className="lg-item" key={l.type}>
-                <span className="lg-swatch" style={{ background: LEGEND_COLORS[l.type] }}></span>
+                <span
+                  className="lg-swatch"
+                  style={{ background: LEGEND_COLORS[l.type] }}
+                ></span>
                 {l.label}
               </div>
             ))}
@@ -197,9 +210,6 @@ export default function EmployeeReport({ report, start, end }) {
               <div className="stat-icon">😴</div>
             </div>
           </div>
-
-          
-         
         </div>
 
         {/* Tableau des montants amélioré */}
@@ -211,26 +221,30 @@ export default function EmployeeReport({ report, start, end }) {
             <thead>
               <tr>
                 <th>Détail</th>
-                <th style={{ textAlign: 'right' }}>Montant</th>
+                <th style={{ textAlign: "right" }}>Montant</th>
               </tr>
             </thead>
             <tbody>
               <tr className="detail-row">
                 <td>
                   <span className="detail-label">Salaire brut</span>
-                  <span className="detail-sub">{totalDays} jours de la période</span>
+                  <span className="detail-sub">
+                    {totalDays} jours de la période
+                  </span>
                 </td>
-                <td style={{ textAlign: 'right' }} className="amount-positive">
+                <td style={{ textAlign: "right" }} className="amount-positive">
                   {fmtMoney(brut)}
                 </td>
               </tr>
-              
+
               {avances.length > 0 && (
                 <>
                   <tr className="detail-divider">
                     <td colSpan="2">
                       <span className="divider-text">Avances</span>
-                      <span className="divider-count">{avances.length} avance(s)</span>
+                      <span className="divider-count">
+                        {avances.length} avance(s)
+                      </span>
                     </td>
                   </tr>
                   {avances.map((a, index) => (
@@ -240,9 +254,14 @@ export default function EmployeeReport({ report, start, end }) {
                           <span className="advance-number">#{index + 1}</span>
                           {a.date_avance}
                         </span>
-                        <span className="detail-sub">{a.description || 'Avance'}</span>
+                        <span className="detail-sub">
+                          {a.description || "Avance"}
+                        </span>
                       </td>
-                      <td style={{ textAlign: 'right' }} className="amount-negative">
+                      <td
+                        style={{ textAlign: "right" }}
+                        className="amount-negative"
+                      >
                         - {fmtMoney(a.montant)}
                       </td>
                     </tr>
@@ -254,7 +273,7 @@ export default function EmployeeReport({ report, start, end }) {
                 <td>
                   <span className="total-label">Total avances</span>
                 </td>
-                <td style={{ textAlign: 'right' }} className="amount-negative">
+                <td style={{ textAlign: "right" }} className="amount-negative">
                   - {fmtMoney(totalAvances)}
                 </td>
               </tr>
@@ -263,7 +282,7 @@ export default function EmployeeReport({ report, start, end }) {
                 <td>
                   <span className="net-label">💰 NET À PAYER</span>
                 </td>
-                <td style={{ textAlign: 'right' }} className="net-amount">
+                <td style={{ textAlign: "right" }} className="net-amount">
                   {fmtMoney(net)}
                 </td>
               </tr>
@@ -279,7 +298,9 @@ export default function EmployeeReport({ report, start, end }) {
             <div className="summary-divider">−</div>
             <div className="summary-item">
               <span className="summary-label">Avances</span>
-              <span className="summary-value negative">{fmtMoney(totalAvances)}</span>
+              <span className="summary-value negative">
+                {fmtMoney(totalAvances)}
+              </span>
             </div>
             <div className="summary-divider">=</div>
             <div className="summary-item net">
@@ -302,7 +323,9 @@ export default function EmployeeReport({ report, start, end }) {
             </div>
           </div>
           <div className="signature-footer">
-            <span className="footer-date">{new Date().toLocaleDateString('fr-FR')}</span>
+            <span className="footer-date">
+              {new Date().toLocaleDateString("fr-FR")}
+            </span>
           </div>
         </div>
       </div>
@@ -362,22 +385,6 @@ export default function EmployeeReport({ report, start, end }) {
           display: flex;
           align-items: center;
           gap: 10px;
-        }
-
-        .status-dot {
-          display: inline-block;
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-          flex-shrink: 0;
-        }
-
-        .status-dot.active {
-          background: var(--ok);
-        }
-
-        .status-dot.inactive {
-          background: var(--absent);
         }
 
         .employee-meta {
