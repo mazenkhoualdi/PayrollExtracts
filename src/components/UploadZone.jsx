@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState } from "react";
 
 export default function UploadZone({ onFile, status }) {
   const inputRef = useRef(null);
@@ -10,20 +10,20 @@ export default function UploadZone({ onFile, status }) {
   function handleFiles(files) {
     if (!files || !files.length) return;
     const file = files[0];
-    
+
     // Vérification de la taille du fichier (max 50MB)
     if (file.size > 50 * 1024 * 1024) {
-      alert('Le fichier est trop volumineux. Taille maximum : 50MB');
+      alert("Le fichier est trop volumineux. Taille maximum : 50MB");
       return;
     }
-    
+
     setFileName(file.name);
     setFileSize(file.size);
-    
+
     // Simulation de progression
     setUploadProgress(0);
     const interval = setInterval(() => {
-      setUploadProgress(prev => {
+      setUploadProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           return 100;
@@ -31,16 +31,16 @@ export default function UploadZone({ onFile, status }) {
         return prev + 10;
       });
     }, 100);
-    
+
     onFile(file);
   }
 
   function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   }
 
   function handleRemoveFile(e) {
@@ -49,7 +49,7 @@ export default function UploadZone({ onFile, status }) {
     setFileSize(null);
     setUploadProgress(0);
     if (inputRef.current) {
-      inputRef.current.value = '';
+      inputRef.current.value = "";
     }
   }
 
@@ -59,22 +59,33 @@ export default function UploadZone({ onFile, status }) {
         <h2>
           <span className="num">1</span>
           Charger la base de données
-          {status?.kind === 'ok' && <span className="status-badge success">✓ Chargé</span>}
-          {status?.kind === 'err' && <span className="status-badge error">✗ Erreur</span>}
+          {status?.kind === "ok" && (
+            <span className="status-badge success">✓ Chargé</span>
+          )}
+          {status?.kind === "err" && (
+            <span className="status-badge error">✗ Erreur</span>
+          )}
         </h2>
 
         <div
-          className={`drop-zone ${fileName ? 'has-file' : ''} ${dragging ? 'dragging' : ''} ${status?.kind === 'err' ? 'error' : ''}`}
+          className={`drop-zone ${fileName ? "has-file" : ""} ${dragging ? "dragging" : ""} ${status?.kind === "err" ? "error" : ""}`}
           onClick={() => inputRef.current.click()}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
           onDragLeave={() => setDragging(false)}
-          onDrop={(e) => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragging(false);
+            handleFiles(e.dataTransfer.files);
+          }}
         >
           <input
             ref={inputRef}
             type="file"
             accept=".db,.sqlite,.sqlite3"
-            style={{ display: 'none' }}
+            style={{ display: "none" }}
             onChange={(e) => handleFiles(e.target.files)}
           />
 
@@ -83,12 +94,13 @@ export default function UploadZone({ onFile, status }) {
             <div className="dz-content">
               <div className="dz-icon">📁</div>
               <div className="dz-title">
-                <span className="dz-main">Cliquez ou déposez ici le fichier</span>
+                <span className="dz-main">
+                  Cliquez ou déposez ici le fichier
+                </span>
                 <span className="dz-extensions">.db · .sqlite · .sqlite3</span>
               </div>
               <div className="dz-sub">
                 <span className="dz-security">🔒</span>
-                Tout reste dans votre navigateur, rien n'est envoyé sur internet
               </div>
             </div>
           ) : (
@@ -98,31 +110,35 @@ export default function UploadZone({ onFile, status }) {
                 <span className="dz-file-icon">📄</span>
                 <div className="dz-file-details">
                   <span className="dz-file-name">{fileName}</span>
-                  <span className="dz-file-size">{formatFileSize(fileSize)}</span>
+                  <span className="dz-file-size">
+                    {formatFileSize(fileSize)}
+                  </span>
                 </div>
-                <button 
-                  className="dz-remove-btn" 
+                <button
+                  className="dz-remove-btn"
                   onClick={handleRemoveFile}
                   title="Supprimer le fichier"
                 >
                   ✕
                 </button>
               </div>
-              
+
               {uploadProgress < 100 && (
                 <div className="dz-progress">
-                  <div 
-                    className="dz-progress-bar" 
+                  <div
+                    className="dz-progress-bar"
                     style={{ width: `${uploadProgress}%` }}
                   />
                   <span className="dz-progress-text">{uploadProgress}%</span>
                 </div>
               )}
-              
+
               {uploadProgress === 100 && (
                 <div className="dz-success">
                   <span className="dz-success-icon">✅</span>
-                  <span className="dz-success-text">Fichier chargé avec succès</span>
+                  <span className="dz-success-text">
+                    Fichier chargé avec succès
+                  </span>
                 </div>
               )}
             </div>
@@ -130,19 +146,18 @@ export default function UploadZone({ onFile, status }) {
         </div>
 
         {status && (
-          <div className={`status-line ${status.kind || ''}`}>
+          <div className={`status-line ${status.kind || ""}`}>
             <span className="status-icon">
-              {status.kind === 'ok' && '✅'}
-              {status.kind === 'err' && '❌'}
-              {!status.kind && 'ℹ️'}
+              {status.kind === "ok" && "✅"}
+              {status.kind === "err" && "❌"}
+              {!status.kind && "ℹ️"}
             </span>
             {status.msg}
           </div>
         )}
 
         <div className="upload-footer">
-          <div className="upload-features">
-          </div>
+          <div className="upload-features"></div>
         </div>
       </div>
 
