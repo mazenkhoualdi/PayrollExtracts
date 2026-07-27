@@ -1,27 +1,27 @@
-import { DOW, MONTHS, groupDaysByMonth, fmtMoney } from '../utils/payroll';
+import { DOW, MONTHS, groupDaysByMonth, fmtMoney } from "../utils/payroll";
 
 const TYPE_ICONS = {
-  normal: '✅',
-  demi: '🌓',
-  heures_sup: '⏱️',
-  double: '🔁',
-  absent: '🚫',
-  conge: '🏖️',
-  autre: '📌',
-  dimanche: '😴',
-  sans_donnee: '❓'
+  normal: "✅",
+  demi: "🌓",
+  heures_sup: "⏱️",
+  double: "🔁",
+  absent: "🚫",
+  conge: "🏖️",
+  autre: "📌",
+  dimanche: "😴",
+  sans_donnee: "❓",
 };
 
 const TYPE_LABELS = {
-  normal: 'Journée complète',
-  demi: 'Demi-journée',
-  heures_sup: 'Heures sup',
-  double: 'Journée double',
-  absent: 'Absent',
-  conge: 'Congé',
-  autre: 'Autre',
-  dimanche: 'Dimanche',
-  sans_donnee: 'Non pointé'
+  normal: "Journée complète",
+  demi: "Demi-journée",
+  heures_sup: "Heures sup",
+  double: "Journée double",
+  absent: "Absent",
+  conge: "Congé",
+  autre: "Autre",
+  dimanche: "Dimanche",
+  sans_donnee: "Non pointé",
 };
 
 export default function MonthCalendar({ days }) {
@@ -30,8 +30,8 @@ export default function MonthCalendar({ days }) {
 
   return (
     <div className="month-calendar-wrapper">
-      {keys.map(key => {
-        const [y, m] = key.split('-').map(Number);
+      {keys.map((key) => {
+        const [y, m] = key.split("-").map(Number);
         const monthDays = months[key];
         const firstDow = (new Date(y, m - 1, 1).getDay() + 6) % 7; // Lundi = 0
         const lastDay = new Date(y, m, 0).getDate();
@@ -61,15 +61,18 @@ export default function MonthCalendar({ days }) {
             {/* Grille du calendrier */}
             <div className="cal-grid">
               {/* Jours de la semaine */}
-              {DOW.map(d => (
-                <div className={`cal-dow ${d === 'Sam' || d === 'Dim' ? 'weekend' : ''}`} key={d}>
+              {DOW.map((d) => (
+                <div
+                  className={`cal-dow ${d === "Sam" || d === "Dim" ? "weekend" : ""}`}
+                  key={d}
+                >
                   {d}
                 </div>
               ))}
 
               {/* Jours vides avant le début du mois */}
               {Array.from({ length: firstDow }).map((_, i) => (
-                <div className="cal-cell empty" key={'e' + i}>
+                <div className="cal-cell empty" key={"e" + i}>
                   <span className="empty-dot">•</span>
                 </div>
               ))}
@@ -77,12 +80,14 @@ export default function MonthCalendar({ days }) {
               {/* Jours du mois */}
               {monthDays.map((d, index) => {
                 const dayNum = parseInt(d.date.slice(8, 10), 10);
-                const isWeekend = (dayNum + firstDow) % 7 === 5 || (dayNum + firstDow) % 7 === 6;
+                const isWeekend =
+                  (dayNum + firstDow) % 7 === 5 ||
+                  (dayNum + firstDow) % 7 === 6;
                 const dayOfWeek = (dayNum + firstDow - 1) % 7;
 
                 return (
                   <div
-                    className={`cal-cell type-${d.type} ${isWeekend ? 'weekend' : ''} ${d.montant > 0 ? 'has-amount' : ''}`}
+                    className={`cal-cell type-${d.type} ${isWeekend ? "weekend" : ""} ${d.montant > 0 ? "has-amount" : ""}`}
                     key={d.date}
                     title={`${d.date} — ${TYPE_LABELS[d.type] || d.label}`}
                   >
@@ -94,7 +99,9 @@ export default function MonthCalendar({ days }) {
                         )}
                       </div>
                       <div className="cal-cell-bottom">
-                        <span className="d-icon">{TYPE_ICONS[d.type] || '📌'}</span>
+                        <span className="d-icon">
+                          {TYPE_ICONS[d.type] || "📌"}
+                        </span>
                         <span className="d-label">{d.label}</span>
                       </div>
                     </div>
@@ -107,7 +114,7 @@ export default function MonthCalendar({ days }) {
             <div className="month-legend">
               <div className="month-legend-stats">
                 {Object.entries(TYPE_ICONS).map(([type, icon]) => {
-                  const count = monthDays.filter(d => d.type === type).length;
+                  const count = monthDays.filter((d) => d.type === type).length;
                   if (count === 0) return null;
                   return (
                     <span key={type} className={`legend-item type-${type}`}>
@@ -189,8 +196,10 @@ export default function MonthCalendar({ days }) {
         /* Grille du calendrier */
         .cal-grid {
           display: grid;
-          grid-template-columns: repeat(7, 1fr);
+          grid-template-columns: repeat(7, minmax(0, 1fr));
           gap: 6px;
+          width: 100%;
+          overflow: hidden;
         }
 
         .cal-dow {
@@ -201,6 +210,7 @@ export default function MonthCalendar({ days }) {
           padding: 6px 4px 8px 4px;
           text-transform: uppercase;
           letter-spacing: 0.3px;
+          min-width: 0;
         }
 
         .cal-dow.weekend {
@@ -211,11 +221,13 @@ export default function MonthCalendar({ days }) {
         .cal-cell {
           border-radius: 8px;
           min-height: 72px;
+          min-width: 0;
           padding: 6px 8px;
           background: #fafbfc;
           border: 1px solid #f1f3f5;
           transition: all 0.2s ease;
           position: relative;
+          overflow: hidden;
         }
 
         .cal-cell:hover {
@@ -256,12 +268,14 @@ export default function MonthCalendar({ days }) {
           flex-direction: column;
           height: 100%;
           gap: 4px;
+          min-width: 0;
         }
 
         .cal-cell-top {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
+          min-width: 0;
         }
 
         .d-num {
@@ -286,6 +300,7 @@ export default function MonthCalendar({ days }) {
           align-items: center;
           gap: 4px;
           margin-top: auto;
+          min-width: 0;
         }
 
         .d-icon {
@@ -301,6 +316,7 @@ export default function MonthCalendar({ days }) {
           overflow: hidden;
           text-overflow: ellipsis;
           flex: 1;
+          min-width: 0;
         }
 
         /* Types de cellules */
