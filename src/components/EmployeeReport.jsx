@@ -337,11 +337,6 @@ export default function EmployeeReport({ report, start, end }) {
           <div className="signature-line">
             <div className="signature-box">
               <div className="signature-label">Signature de l'employé</div>
-              <div className="signature-line-dash"></div>
-            </div>
-            <div className="signature-box">
-              <div className="signature-label">Signature responsable</div>
-              <div className="signature-line-dash"></div>
             </div>
           </div>
           <div className="signature-footer">
@@ -820,6 +815,7 @@ export default function EmployeeReport({ report, start, end }) {
           margin-top: 14px;
           padding-top: 10px;
           border-top: 2px solid #e9ecef;
+          
         }
 
         .signature-line {
@@ -830,7 +826,9 @@ export default function EmployeeReport({ report, start, end }) {
 
         .signature-box {
           flex: 1;
-          text-align: center;
+          text-align: end;
+          margin-right:60px;
+          padding-top:10px
         }
 
         .signature-label {
