@@ -1,13 +1,13 @@
-import { useRef, useState, useEffect } from 'react';
-import initSqlJs from 'sql.js/dist/sql-wasm.js';
-import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
-import html2pdf from 'html2pdf.js';
+import { useRef, useState, useEffect } from "react";
+import initSqlJs from "sql.js/dist/sql-wasm.js";
+import sqlWasmUrl from "sql.js/dist/sql-wasm.wasm?url";
+import html2pdf from "html2pdf.js";
 
-import UploadZone from './components/UploadZone';
-import ConfigPanel from './components/ConfigPanel';
-import EmployeePicker from './components/EmployeePicker';
-import EmployeeReport from './components/EmployeeReport';
-import { buildEmployeeReport, queryAll } from './utils/payroll';
+import UploadZone from "./components/UploadZone";
+import ConfigPanel from "./components/ConfigPanel";
+import EmployeePicker from "./components/EmployeePicker";
+import EmployeeReport from "./components/EmployeeReport";
+import { buildEmployeeReport, queryAll } from "./utils/payroll";
 
 let sqlPromise = null;
 function getSql() {
@@ -22,11 +22,11 @@ export default function App() {
   const [db, setDb] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [selectedIds, setSelectedIds] = useState(new Set());
-  const [config, setConfig] = useState({ 
-    start: '', 
-    end: '', 
-    overtimeMult: 1.5, 
-    congePaye: true 
+  const [config, setConfig] = useState({
+    start: "",
+    end: "",
+    overtimeMult: 1.5,
+    congePaye: true,
   });
   const [reports, setReports] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -38,115 +38,138 @@ export default function App() {
   // Statistiques sur les employés
   useEffect(() => {
     if (employees.length > 0) {
-      const active = employees.filter(e => e.actif).length;
-      setEmployeeCount({ total: employees.length, active, inactive: employees.length - active });
+      const active = employees.filter((e) => e.actif).length;
+      setEmployeeCount({
+        total: employees.length,
+        active,
+        inactive: employees.length - active,
+      });
     }
   }, [employees]);
 
   async function handleFile(file) {
-    setStatus({ msg: 'Lecture du fichier...', kind: 'loading' });
+    setStatus({ msg: "Lecture du fichier...", kind: "loading" });
     try {
       const buffer = await file.arrayBuffer();
       const SQL = await getSql();
       const database = new SQL.Database(new Uint8Array(buffer));
 
-      const emps = queryAll(database, 'SELECT * FROM employes ORDER BY actif DESC, nom, prenom');
-      const range = queryAll(database, 'SELECT MIN(date_pointage) AS mn, MAX(date_pointage) AS mx FROM pointages')[0];
+      const emps = queryAll(
+        database,
+        "SELECT * FROM employes ORDER BY actif DESC, nom, prenom",
+      );
+      const range = queryAll(
+        database,
+        "SELECT MIN(date_pointage) AS mn, MAX(date_pointage) AS mx FROM pointages",
+      )[0];
 
       setDb(database);
       setEmployees(emps);
-      setConfig(prev => ({ 
-        ...prev, 
-        start: range?.mn || prev.start, 
-        end: range?.mx || prev.end 
+      setConfig((prev) => ({
+        ...prev,
+        start: range?.mn || prev.start,
+        end: range?.mx || prev.end,
       }));
       setStatus({
-        msg: `Base chargée : pointages du ${range?.mn || '?'} au ${range?.mx || '?'}.`,
-        kind: 'ok',
+        msg: `Base chargée : pointages du ${range?.mn || "?"} au ${range?.mx || "?"}.`,
+        kind: "ok",
       });
       setReports(null);
-      setSelectedIds(new Set(emps.filter(e => e.actif).map(e => e.id)));
+      setSelectedIds(new Set(emps.filter((e) => e.actif).map((e) => e.id)));
     } catch (err) {
-      setStatus({ 
-        msg: `❌ Impossible de lire ce fichier comme base SQLite : ${err.message}`, 
-        kind: 'err' 
+      setStatus({
+        msg: `❌ Impossible de lire ce fichier comme base SQLite : ${err.message}`,
+        kind: "err",
       });
     }
   }
 
   function handleGenerate() {
     if (!config.start || !config.end) {
-      alert('📅 Merci de choisir une date de début et de fin.');
+      alert("📅 Merci de choisir une date de début et de fin.");
       return;
     }
     if (config.start > config.end) {
-      alert('⚠️ La date de début doit précéder la date de fin.');
+      alert("⚠️ La date de début doit précéder la date de fin.");
       return;
     }
     if (selectedIds.size === 0) {
-      alert('👥 Sélectionnez au moins un employé.');
+      alert("👥 Sélectionnez au moins un employé.");
       return;
     }
 
     setIsGenerating(true);
-    setStatus({ msg: `⏳ Génération des extraits pour ${selectedIds.size} employé(s)...`, kind: 'loading' });
+    setStatus({
+      msg: `⏳ Génération des extraits pour ${selectedIds.size} employé(s)...`,
+      kind: "loading",
+    });
 
     setTimeout(() => {
-      const selectedEmployees = employees.filter(e => selectedIds.has(e.id));
-      const built = selectedEmployees.map(emp =>
-        buildEmployeeReport(db, emp, config.start, config.end, config.overtimeMult, config.congePaye)
+      const selectedEmployees = employees.filter((e) => selectedIds.has(e.id));
+      const built = selectedEmployees.map((emp) =>
+        buildEmployeeReport(
+          db,
+          emp,
+          config.start,
+          config.end,
+          config.overtimeMult,
+          config.congePaye,
+        ),
       );
       setReports(built);
       setIsGenerating(false);
-      setStatus({ 
-        msg: `✅ ${built.length} extrait(s) généré(s) avec succès !`, 
-        kind: 'ok' 
+      setStatus({
+        msg: `✅ ${built.length} extrait(s) généré(s) avec succès !`,
+        kind: "ok",
       });
-      setTimeout(() => reportsRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+      setTimeout(
+        () => reportsRef.current?.scrollIntoView({ behavior: "smooth" }),
+        100,
+      );
     }, 500);
   }
 
   function downloadAllPdf() {
     const el = reportsRef.current;
     if (!el) return;
-    
+
     setIsDownloadingAll(true);
-    const noPrintEls = el.querySelectorAll('.no-print');
-    noPrintEls.forEach(n => (n.style.visibility = 'hidden'));
-    
+    const noPrintEls = el.querySelectorAll(".no-print");
+    noPrintEls.forEach((n) => (n.style.visibility = "hidden"));
+
     const opt = {
       margin: 8,
-      filename: 'extraits_salaire_groupe.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
+      filename: "extraits_salaire_groupe.pdf",
+      image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'], after: '.employee-report' },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: ["css", "legacy"], after: ".employee-report" },
     };
-    
+
     html2pdf()
       .set(opt)
       .from(el)
       .save()
       .then(() => {
-        noPrintEls.forEach(n => (n.style.visibility = 'visible'));
+        noPrintEls.forEach((n) => (n.style.visibility = "visible"));
         setIsDownloadingAll(false);
-        setStatus({ 
-          msg: `✅ Tous les extraits ont été téléchargés avec succès !`, 
-          kind: 'ok' 
+        setStatus({
+          msg: `✅ Tous les extraits ont été téléchargés avec succès !`,
+          kind: "ok",
         });
       })
       .catch(() => {
-        noPrintEls.forEach(n => (n.style.visibility = 'visible'));
+        noPrintEls.forEach((n) => (n.style.visibility = "visible"));
         setIsDownloadingAll(false);
-        setStatus({ 
-          msg: `❌ Erreur lors du téléchargement du PDF.`, 
-          kind: 'err' 
+        setStatus({
+          msg: `❌ Erreur lors du téléchargement du PDF.`,
+          kind: "err",
         });
       });
   }
 
   function scrollToTop() {
-    topRef.current?.scrollIntoView({ behavior: 'smooth' });
+    topRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
@@ -156,11 +179,13 @@ export default function App() {
         <div className="header-left">
           <div className="logo">
             <span className="logo-icon">🏢</span>
-            <span className="logo-text">RH</span>
           </div>
           <div className="header-title">
             <h1>Générateur d'extraits de salaire</h1>
-            <p>À partir de la base de pointage — calendrier détaillé, calcul du salaire, avances déduites</p>
+            <p>
+              À partir de la base de pointage — calendrier détaillé, calcul du
+              salaire, avances déduites
+            </p>
           </div>
         </div>
         {employees.length > 0 && (
@@ -212,8 +237,8 @@ export default function App() {
                 </span>
               </div>
               <div className="reports-header-right">
-                <button 
-                  className="btn secondary" 
+                <button
+                  className="btn secondary"
                   onClick={downloadAllPdf}
                   disabled={isDownloadingAll}
                 >
@@ -223,12 +248,13 @@ export default function App() {
                       Téléchargement...
                     </>
                   ) : (
-                    <>
-                      📥 Télécharger tout en PDF
-                    </>
+                    <>📥 Télécharger tout en PDF</>
                   )}
                 </button>
-                <button className="btn secondary" onClick={() => window.print()}>
+                <button
+                  className="btn secondary"
+                  onClick={() => window.print()}
+                >
                   🖨️ Imprimer
                 </button>
                 <button className="btn secondary" onClick={scrollToTop}>
@@ -244,10 +270,10 @@ export default function App() {
               {reports.map((r, index) => (
                 <div key={r.emp.id} className="report-wrapper">
                   <div className="report-number">#{index + 1}</div>
-                  <EmployeeReport 
-                    report={r} 
-                    start={config.start} 
-                    end={config.end} 
+                  <EmployeeReport
+                    report={r}
+                    start={config.start}
+                    end={config.end}
                   />
                 </div>
               ))}
