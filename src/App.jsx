@@ -38,11 +38,8 @@ export default function App() {
   // Statistiques sur les employés
   useEffect(() => {
     if (employees.length > 0) {
-      const active = employees.filter((e) => e.actif).length;
       setEmployeeCount({
         total: employees.length,
-        active,
-        inactive: employees.length - active,
       });
     }
   }, [employees]);
@@ -56,7 +53,7 @@ export default function App() {
 
       const emps = queryAll(
         database,
-        "SELECT * FROM employes ORDER BY actif DESC, nom, prenom",
+        "SELECT * FROM employes WHERE actif = 1 ORDER BY nom, prenom",
       );
       const range = queryAll(
         database,
@@ -75,7 +72,7 @@ export default function App() {
         kind: "ok",
       });
       setReports(null);
-      setSelectedIds(new Set(emps.filter((e) => e.actif).map((e) => e.id)));
+      setSelectedIds(new Set(emps.map((e) => e.id)));
     } catch (err) {
       setStatus({
         msg: `❌ Impossible de lire ce fichier comme base SQLite : ${err.message}`,
@@ -193,10 +190,6 @@ export default function App() {
             <div className="stat-item">
               <span className="stat-number">{employees.length}</span>
               <span className="stat-label">Employés</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">{employeeCount.active || 0}</span>
-              <span className="stat-label">Actifs</span>
             </div>
             <div className="stat-item">
               <span className="stat-number">{selectedIds.size}</span>
