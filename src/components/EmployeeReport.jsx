@@ -60,13 +60,31 @@ export default function EmployeeReport({ report, start, end }) {
         useCORS: true,
         logging: false,
         letterRendering: true,
+        // windowWidth simule une fenêtre de navigateur large pendant la
+        // capture, pour empêcher les media queries "mobile" de se
+        // déclencher à tort (ce qui causait des composants plus gros).
+        // On NE force PAS `width` ici : html2pdf redimensionne déjà son
+        // conteneur interne à la largeur exacte de la page PDF, donc
+        // fixer `width` à une valeur plus large (ex: largeur de l'écran)
+        // ne fait que rajouter un vide blanc à droite de l'image capturée.
+        windowWidth: el.scrollWidth,
+        // Évite qu'un défilement horizontal/vertical résiduel de la page
+        // ne décale la zone capturée et ne coupe le bord droit (colonne
+        // Dimanche) du calendrier.
+        scrollX: 0,
+        scrollY: 0,
       },
       jsPDF: {
         unit: "mm",
         format: "a4",
         orientation: "portrait",
       },
-      pagebreak: { mode: ["avoid-all"] },
+      // Pas de règle de saut de page ici : la hauteur de la page est
+      // recalculée juste après pour correspondre exactement au contenu
+      // (une seule page). Garder "pagebreak: avoid-all" forcerait html2pdf
+      // à réserver un espace vide au milieu de la page, à l'endroit où se
+      // situerait la limite d'une page A4 standard (297mm), pour éviter de
+      // couper un bloc à cet endroit — ce qui créait le grand vide observé.
     };
 
     const finish = () => {
