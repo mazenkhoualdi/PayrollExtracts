@@ -226,11 +226,6 @@ export default function EmployeeReport({ report, start, end }) {
               <div className="stat-label">Congés</div>
               <div className="stat-icon">🏖️</div>
             </div>
-            <div className="stat stat-dimanche">
-              <div className="stat-value">{counts.dimanche}</div>
-              <div className="stat-label">Dimanches (repos)</div>
-              <div className="stat-icon">😴</div>
-            </div>
           </div>
         </div>
 
