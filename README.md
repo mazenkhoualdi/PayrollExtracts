@@ -1,80 +1,78 @@
-# Extraits de salaire — version React
+# Payroll Extracts — React Version
 
-Application web (React + Vite) qui lit directement votre fichier `.db` (SQLite) de
-pointage/salaire/avances et génère, pour chaque employé sélectionné, un extrait avec :
+A React + Vite web application that directly reads your `.db` (SQLite) payroll database
+(attendance, salaries, and advances) and generates a payroll extract for each selected employee, including:
 
-- un calendrier coloré jour par jour : journée complète, demi-journée, heures sup,
-  journée double, absence, congé, ou jour non pointé ;
-- le récapitulatif des compteurs (nombre de jours de chaque type, heures sup cumulées) ;
-- le détail des avances déduites sur la période ;
-- le **net à payer** ;
-- un bouton de téléchargement PDF par employé, et un bouton pour tout télécharger
-  en un seul PDF groupé.
+- a color-coded daily calendar showing: full day, half day, overtime,
+  double day, absence, leave, or unrecorded day;
+- a summary of attendance counters (number of days for each category and total overtime hours);
+- a detailed list of salary advances deducted during the selected period;
+- the **net salary payable**;
+- a button to download an individual PDF for each employee, and another button to download
+  all selected employees as a single combined PDF.
 
-Tout se passe dans le navigateur : le fichier `.db` n'est jamais envoyé sur un serveur.
+Everything runs directly in the browser: the `.db` file is never uploaded to a server.
 
 ## Installation
 
-Prérequis : [Node.js](https://nodejs.org) 18 ou plus récent.
+Prerequisite: [Node.js](https://nodejs.org) version 18 or later.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Puis ouvrez l'adresse affichée dans le terminal (en général `http://localhost:5173`).
+Then open the URL displayed in the terminal (usually `http://localhost:5173`).
 
-## Build de production
+## Production Build
 
 ```bash
 npm run build
 npm run preview
 ```
 
-Le dossier `dist/` généré peut être déployé sur n'importe quel hébergement statique
-(Netlify, Vercel, un simple serveur web interne, etc.).
+The generated `dist/` folder can be deployed to any static hosting service
+(Netlify, Vercel, or any internal web server).
 
-## Structure du projet
+## Project Structure
 
 ```
 src/
-  App.jsx                     — orchestration générale (état, génération des extraits)
-  index.css                   — thème visuel
-  utils/payroll.js            — logique métier : classification des jours, calcul du salaire
+  App.jsx                     — main application orchestration (state management and payroll generation)
+  index.css                   — visual theme
+  utils/payroll.js            — business logic: day classification and payroll calculations
   components/
-    UploadZone.jsx            — dépôt du fichier .db
-    ConfigPanel.jsx           — période et options (majoration heures sup, congé payé)
-    EmployeePicker.jsx        — sélection des employés
-    MonthCalendar.jsx         — calendrier mensuel coloré
-    EmployeeReport.jsx        — extrait complet d'un employé + export PDF
+    UploadZone.jsx            — SQLite database upload
+    ConfigPanel.jsx           — period selection and calculation options (overtime multiplier, paid leave)
+    EmployeePicker.jsx        — employee selection
+    MonthCalendar.jsx         — color-coded monthly calendar
+    EmployeeReport.jsx        — complete employee payroll extract with PDF export
 ```
 
-## Règles de calcul (adaptées à votre base)
+## Calculation Rules (Adapted to Your Database)
 
-La classification d'une journée est déduite du champ `heures_travaillees` et du
-`type_presence` de la table `pointages` :
+Each day's classification is determined from the `heures_travaillees` (worked hours)
+and `type_presence` fields in the `pointages` table.
 
-| Cas                                             | Type          | Montant                                   |
-|--------------------------------------------------|---------------|--------------------------------------------|
-| `present` + `journee_complete` + 8h              | Journée complète | 1 × salaire journalier                   |
-| `present` + `demi_journee`                       | Demi-journée   | 0.5 × salaire journalier                  |
-| `present` + `journee_complete` + >8h              | Heures sup     | salaire journalier + heures sup × taux horaire × majoration |
-| `present` + `journee_complete` + ≥16h             | Journée double | 2 × salaire journalier                    |
-| `absent`                                          | Absent         | 0                                          |
-| `conge`                                           | Congé          | salaire journalier si "congé payé" est coché, sinon 0 |
-| Aucune ligne pour ce jour                         | Non pointé     | 0                                          |
+| Condition | Classification | Amount |
+|-----------|----------------|--------|
+| `present` + `journee_complete` + 8h | Full Day | 1 × daily salary |
+| `present` + `demi_journee` | Half Day | 0.5 × daily salary |
+| `present` + `journee_complete` + >8h | Overtime | Daily salary + overtime hours × hourly rate × overtime multiplier |
+| `present` + `journee_complete` + ≥16h | Double Day | 2 × daily salary |
+| `absent` | Absent | 0 |
+| `conge` | Leave | Daily salary if **Paid Leave** is enabled, otherwise 0 |
+| No attendance record for the day | Unrecorded Day | 0 |
 
-Les **avances** (`table avances`) sont déduites automatiquement selon leur date, si
-elles tombent dans la période sélectionnée.
+Salary **advances** (from the `avances` table) are automatically deducted if their date
+falls within the selected period.
 
-La table **compléments** (loyer, gasoil, transport...) n'est **pas incluse** dans le
-calcul : elle n'a pas de colonne `employe_id` dans votre base, donc aucun lien fiable
-vers un employé précis. Si vous voulez l'intégrer un jour, ajoutez cette colonne côté
-logiciel source, et une requête pourra facilement être ajoutée dans `payroll.js`.
+The **complements** table (housing, fuel, transportation, etc.) is **not included** in the payroll calculation because it does not contain an `employe_id` column, making it impossible to reliably associate records with a specific employee.
 
-## Personnalisation rapide
+If you want to include these complements in the future, simply add an `employe_id` column in the source application. The corresponding query can then be easily implemented in `payroll.js`.
 
-- Majoration des heures sup et "congé payé" : modifiables directement dans
-  l'interface (section 2).
-- Couleurs et mise en page : `src/index.css` (variables CSS en haut du fichier).
-- Règles de calcul : `src/utils/payroll.js`, fonctions `classifyDay` et `dayAmount`.
+## Quick Customization
+
+- Overtime multiplier and **Paid Leave** option: configurable directly from the user interface (Section 2).
+- Colors and layout: `src/index.css` (CSS variables at the top of the file).
+- Payroll calculation rules: `src/utils/payroll.js`, particularly the `classifyDay` and `dayAmount` functions.
