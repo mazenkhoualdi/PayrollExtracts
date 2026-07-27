@@ -138,7 +138,22 @@ export default function App() {
       margin: 8,
       filename: "extraits_salaire_groupe.pdf",
       image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        // windowWidth évite que les media queries "mobile" se déclenchent
+        // à tort pendant la capture. On ne force pas `width` : html2pdf
+        // redimensionne déjà son conteneur interne à la largeur de la
+        // page PDF, donc fixer `width` plus large ajouterait un vide à
+        // droite de l'image capturée.
+        windowWidth: el.scrollWidth,
+        // Évite qu'un défilement horizontal/vertical résiduel de la page
+        // ne décale la zone capturée et ne coupe le bord droit (colonne
+        // Dimanche) du calendrier.
+        scrollX: 0,
+        scrollY: 0,
+      },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       pagebreak: { mode: ["css", "legacy"], after: ".employee-report" },
     };
