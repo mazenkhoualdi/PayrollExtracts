@@ -1,8 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from "react";
 
-export default function EmployeePicker({ employees, selectedIds, setSelectedIds, onGenerate }) {
-  const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'active', 'inactive'
+export default function EmployeePicker({
+  employees,
+  selectedIds,
+  setSelectedIds,
+  onGenerate,
+}) {
+  const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -10,48 +14,38 @@ export default function EmployeePicker({ employees, selectedIds, setSelectedIds,
 
     // Filtre par recherche
     if (term) {
-      result = result.filter(e =>
-        (e.nom || '').toLowerCase().includes(term) ||
-        (e.prenom || '').toLowerCase().includes(term) ||
-        (e.poste || '').toLowerCase().includes(term)
+      result = result.filter(
+        (e) =>
+          (e.nom || "").toLowerCase().includes(term) ||
+          (e.prenom || "").toLowerCase().includes(term) ||
+          (e.poste || "").toLowerCase().includes(term),
       );
     }
 
-    // Filtre par statut
-    if (filterStatus === 'active') {
-      result = result.filter(e => e.actif);
-    } else if (filterStatus === 'inactive') {
-      result = result.filter(e => !e.actif);
-    }
-
     return result;
-  }, [employees, search, filterStatus]);
+  }, [employees, search]);
 
   const stats = useMemo(() => {
     const total = employees.length;
-    const active = employees.filter(e => e.actif).length;
     const selected = selectedIds.size;
-    return { total, active, selected };
+    return { total, selected };
   }, [employees, selectedIds]);
 
   function toggle(id) {
-    setSelectedIds(prev => {
+    setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
 
   function selectAll() {
-    setSelectedIds(new Set(employees.map(e => e.id)));
+    setSelectedIds(new Set(employees.map((e) => e.id)));
   }
 
   function selectNone() {
     setSelectedIds(new Set());
-  }
-
-  function selectActive() {
-    setSelectedIds(new Set(employees.filter(e => e.actif).map(e => e.id)));
   }
 
   return (
@@ -66,25 +60,17 @@ export default function EmployeePicker({ employees, selectedIds, setSelectedIds,
       <div className="emp-toolbar">
         <div className="toolbar-left">
           <div className="btn-group">
-            <button 
-              type="button" 
-              className="toolbar-btn select-all" 
+            <button
+              type="button"
+              className="toolbar-btn select-all"
               onClick={selectAll}
               title="Sélectionner tous les employés"
             >
               <span className="icon">✅</span> Tout
             </button>
-            <button 
-              type="button" 
-              className="toolbar-btn select-active" 
-              onClick={selectActive}
-              title="Sélectionner uniquement les employés actifs"
-            >
-              <span className="icon">👤</span> Actifs
-            </button>
-            <button 
-              type="button" 
-              className="toolbar-btn select-none" 
+            <button
+              type="button"
+              className="toolbar-btn select-none"
               onClick={selectNone}
               title="Désélectionner tous les employés"
             >
@@ -94,29 +80,6 @@ export default function EmployeePicker({ employees, selectedIds, setSelectedIds,
         </div>
 
         <div className="toolbar-right">
-          <div className="filter-badges">
-            <button
-              type="button"
-              className={`filter-badge ${filterStatus === 'all' ? 'active' : ''}`}
-              onClick={() => setFilterStatus('all')}
-            >
-              Tous ({stats.total})
-            </button>
-            <button
-              type="button"
-              className={`filter-badge ${filterStatus === 'active' ? 'active' : ''}`}
-              onClick={() => setFilterStatus('active')}
-            >
-              Actifs ({stats.active})
-            </button>
-            <button
-              type="button"
-              className={`filter-badge ${filterStatus === 'inactive' ? 'active' : ''}`}
-              onClick={() => setFilterStatus('inactive')}
-            >
-              Inactifs ({stats.total - stats.active})
-            </button>
-          </div>
           <div className="search-wrapper">
             <span className="search-icon">🔍</span>
             <input
@@ -124,12 +87,12 @@ export default function EmployeePicker({ employees, selectedIds, setSelectedIds,
               className="search-box"
               placeholder="Rechercher un employé..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
             />
             {search && (
-              <button 
+              <button
                 className="search-clear"
-                onClick={() => setSearch('')}
+                onClick={() => setSearch("")}
                 title="Effacer la recherche"
               >
                 ✕
@@ -144,10 +107,13 @@ export default function EmployeePicker({ employees, selectedIds, setSelectedIds,
         <div className="search-results-info">
           <span className="icon">🔍</span>
           {filtered.length === 0 ? (
-            <span>Aucun employé ne correspond à "<strong>{search}</strong>"</span>
+            <span>
+              Aucun employé ne correspond à "<strong>{search}</strong>"
+            </span>
           ) : (
             <span>
-              <strong>{filtered.length}</strong> employé(s) correspondent à "<strong>{search}</strong>"
+              <strong>{filtered.length}</strong> employé(s) correspondent à "
+              <strong>{search}</strong>"
             </span>
           )}
         </div>
@@ -162,31 +128,31 @@ export default function EmployeePicker({ employees, selectedIds, setSelectedIds,
             <small>Modifiez vos critères de recherche ou de filtrage</small>
           </div>
         ) : (
-          filtered.map(emp => (
+          filtered.map((emp) => (
             <div
               key={emp.id}
-              className={`emp-item ${selectedIds.has(emp.id) ? 'checked' : ''} ${emp.actif ? '' : 'inactive'}`}
+              className={`emp-item ${selectedIds.has(emp.id) ? "checked" : ""}`}
               onClick={() => toggle(emp.id)}
             >
               <div className="emp-checkbox">
-                <input 
-                  type="checkbox" 
-                  checked={selectedIds.has(emp.id)} 
-                  onChange={() => toggle(emp.id)} 
-                  onClick={e => e.stopPropagation()} 
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(emp.id)}
+                  onChange={() => toggle(emp.id)}
+                  onClick={(e) => e.stopPropagation()}
                 />
-                {selectedIds.has(emp.id) && <span className="check-mark">✓</span>}
+                {selectedIds.has(emp.id) && (
+                  <span className="check-mark">✓</span>
+                )}
               </div>
               <div className="emp-avatar">
                 {emp.prenom ? emp.prenom[0] : emp.nom[0]}
               </div>
               <div className="who">
-                <b>{emp.nom} {emp.prenom || ''}</b>
-                <span>
-                  {emp.poste || '—'}
-                  {!emp.actif && <span className="status-badge inactive">Inactif</span>}
-                  {emp.actif && <span className="status-badge active">Actif</span>}
-                </span>
+                <b>
+                  {emp.nom} {emp.prenom || ""}
+                </b>
+                <span>{emp.poste || "—"}</span>
               </div>
             </div>
           ))
@@ -204,10 +170,10 @@ export default function EmployeePicker({ employees, selectedIds, setSelectedIds,
             <span className="label">employé(s) sélectionné(s)</span>
           </span>
           <span className="progress-bar">
-            <span 
-              className="progress-fill" 
-              style={{ 
-                width: `${employees.length > 0 ? (selectedIds.size / employees.length) * 100 : 0}%` 
+            <span
+              className="progress-fill"
+              style={{
+                width: `${employees.length > 0 ? (selectedIds.size / employees.length) * 100 : 0}%`,
               }}
             />
           </span>
@@ -295,35 +261,6 @@ export default function EmployeePicker({ employees, selectedIds, setSelectedIds,
           gap: 12px;
           flex-wrap: wrap;
           align-items: center;
-        }
-
-        .filter-badges {
-          display: flex;
-          gap: 4px;
-          flex-wrap: wrap;
-        }
-
-        .filter-badge {
-          padding: 4px 12px;
-          border: 1px solid #dee2e6;
-          border-radius: 20px;
-          font-size: 11px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          background: white;
-          color: var(--ink-soft);
-        }
-
-        .filter-badge:hover {
-          border-color: var(--brand-2);
-          color: var(--brand);
-        }
-
-        .filter-badge.active {
-          background: var(--brand);
-          color: white;
-          border-color: var(--brand);
         }
 
         .search-wrapper {
@@ -468,14 +405,6 @@ export default function EmployeePicker({ employees, selectedIds, setSelectedIds,
           border-color: var(--ok);
         }
 
-        .emp-item.inactive {
-          opacity: 0.6;
-        }
-
-        .emp-item.inactive:hover {
-          opacity: 0.8;
-        }
-
         .emp-checkbox {
           position: relative;
           width: 20px;
@@ -537,10 +466,6 @@ export default function EmployeePicker({ employees, selectedIds, setSelectedIds,
           background: var(--ok);
         }
 
-        .emp-item.inactive .emp-avatar {
-          background: #adb5bd;
-        }
-
         .who {
           flex: 1;
           min-width: 0;
@@ -562,25 +487,6 @@ export default function EmployeePicker({ employees, selectedIds, setSelectedIds,
           font-size: 11.5px;
           color: var(--ink-soft);
           flex-wrap: wrap;
-        }
-
-        .status-badge {
-          font-size: 9px;
-          padding: 1px 8px;
-          border-radius: 12px;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .status-badge.active {
-          background: var(--ok-bg);
-          color: var(--ok);
-        }
-
-        .status-badge.inactive {
-          background: var(--absent-bg);
-          color: var(--absent);
         }
 
         .actions-bar {
@@ -651,11 +557,6 @@ export default function EmployeePicker({ employees, selectedIds, setSelectedIds,
             width: 100%;
           }
 
-          .filter-badges {
-            width: 100%;
-            justify-content: center;
-          }
-
           .search-wrapper {
             width: 100%;
           }
@@ -695,10 +596,6 @@ export default function EmployeePicker({ employees, selectedIds, setSelectedIds,
             font-size: 11px;
           }
 
-          .filter-badge {
-            font-size: 10px;
-            padding: 3px 10px;
-          }
         }
       `}</style>
     </div>
