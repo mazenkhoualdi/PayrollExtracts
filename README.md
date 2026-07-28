@@ -1,4 +1,4 @@
-# Payroll Extracts — React Version
+# Payroll Extracts 
 
 A React + Vite web application that directly reads your `.db` (SQLite) payroll database
 (attendance, salaries, and advances) and generates a payroll extract for each selected employee, including:
