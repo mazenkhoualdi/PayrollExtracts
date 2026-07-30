@@ -4,6 +4,8 @@ const url = require('node:url');
 
 const isDev = !app.isPackaged;
 const DEV_SERVER_URL = 'http://localhost:5173';
+
+
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'app',
